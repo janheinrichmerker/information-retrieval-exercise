@@ -39,7 +39,7 @@ jobs:
         with:
           context: .
           push: false
-          tags: information-retrieval-exercise
+          tags: information-retrieval-exercise:latest
           cache-from: type=local,src=.cache
           cache-to: type=local,dest=.cache
       - name: Set up Python environment
@@ -53,7 +53,7 @@ jobs:
           tira-run \
           --tira-client-token ${{ secrets.TIRA_CLIENT_TOKEN }} \
           --input-dataset ${{ inputs.dataset || 'ir-lab-wise-2024/subsampled-ms-marco-deep-learning-20241201-training' }} \
-          --image information-retrieval-exercise \
+          --image information-retrieval-exercise:latest \
           --command "jupyter-execute /app/${{ inputs.notebook || 'retrieval-baseline.ipynb' }}" \
           --fail-if-output-is-empty \
           --push ${{ github.event== 'worflow_dispatch' }} \
