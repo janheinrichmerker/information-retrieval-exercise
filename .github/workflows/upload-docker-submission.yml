@@ -1,4 +1,4 @@
-name: Upload to TIRA
+name: Build and upload notebook to TIRA
 on: 
   push:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
       notebook:
         description: The path to the Jupyter notebook that you want to submit to TIRA.
         required: true
+        type: string
         default: retrieval-baseline.ipynb
       dataset:
         type: choice
@@ -17,21 +18,23 @@ on:
         default: ir-lab-wise-2024/subsampled-ms-marco-deep-learning-20241201-training
 jobs:
   docker-build:
-    name: Build and upload aoftware to TIRA
+    name: Build and upload notebook to TIRA
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Checkout
+      - name: Check TIRA login
+        run: |
+          if [[ "${{ secrets.TIRA_CLIENT_TOKEN }}" == "" ]]; then
+            echo "You must configure the TIRA_CLIENT_TOKEN secret."
+            exit 1
+          fi
+      - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Set up QEMU
+      - name: Set up QEMU for Docker build
         uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx tools
         uses: docker/setup-buildx-action@v3
-      - name: Set up Dependencies
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      - name: Build Docker image
+      - name: Build Docker image for notebook
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -39,15 +42,19 @@ jobs:
           tags: information-retrieval-exercise
           cache-from: type=local,src=.cache
           cache-to: type=local,dest=.cache
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
       - name: Install Python dependencies
         run: pip install tira
       - name: Test and upload Docker image
         run: |
           tira-run \
           --tira-client-token ${{ secrets.TIRA_CLIENT_TOKEN }} \
-          --input-dataset ${{ inputs.dataset }} \
+          --input-dataset ${{ inputs.dataset || 'ir-lab-wise-2024/subsampled-ms-marco-deep-learning-20241201-training' }} \
           --image information-retrieval-exercise \
-          --command "jupyter-execute /app/${{ inputs.notebook }}" \
+          --command "jupyter-execute /app/${{ inputs.notebook || 'retrieval-baseline.ipynb' }}" \
           --fail-if-output-is-empty \
           --push ${{ github.event== 'worflow_dispatch' }} \
           --output-directory .tira/output/
