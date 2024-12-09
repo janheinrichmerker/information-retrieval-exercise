@@ -1,5 +1,6 @@
-name: Upload Software to TIRA
+name: Upload to TIRA
 on: 
+  push:
   workflow_dispatch:
     inputs:
       notebook:
@@ -16,6 +17,7 @@ on:
         default: ir-lab-wise-2024/subsampled-ms-marco-deep-learning-20241201-training
 jobs:
   docker-build:
+    name: Build and upload aoftware to TIRA
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -28,7 +30,7 @@ jobs:
       - name: Set up Dependencies
         uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
