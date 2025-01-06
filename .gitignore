@@ -2,3 +2,4 @@
 data/index/
 data/runs/*.txt
 data/runs/*.gz
+tira-output/
